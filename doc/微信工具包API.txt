@@ -1,0 +1,601 @@
+微信工具包API
+
+=====================================================================================================================
+(一)、验证消息真实性的工具类：com.zy.weixin.tool.CheckSignatureTool
+---------------------------------------------------------------------------------------------------------------------
+1、String check(String token, String signature, String timestamp, String nonce, String echostr)
+[方法说明]：
+		验证消息真实性
+[方法参数]：
+		token --String*-- 开发者填写的token(由开发者自行定义)
+		signature --String*-- 微信加密签名，signature结合了开发者填写的token参数和请求中的timestamp参数、nonce参数。(通过request.getParameter("signature")获取)
+		timestamp --String*-- 时间戳(通过request.getParameter("timestamp")获取)
+		nonce --String*-- 随机数(通过request.getParameter("nonce")获取)
+		echostr --String*-- 随机字符串(通过request.getParameter("echostr")获取)
+[返回值]：
+		若验证成功则返回echostr；若效验失败则返回error		
+[使用例子]：
+String rtnMsg = CheckSignatureTool.check(token, request.getParameter("signature"), request.getParameter("timestamp"), request.getParameter("nonce"), request.getParameter("echostr"));
+
+
+=====================================================================================================================
+(二)、解析接收消息的工具类：com.zy.weixin.tool.MessageAnalyzeTool
+---------------------------------------------------------------------------------------------------------------------
+1、String getXmlMessageFromRequest(InputStream inputStream)
+[方法说明]：
+		从请求中(即从HttpServletRequest对象中)获取消息XML字符串
+[方法参数]：
+		inputStream --InputStream*-- HttpServletRequest对象的InputStream(通过request.getInputStream()获取)
+[返回值]：
+		null或消息XML字符串		
+[使用例子]：
+String strXML = MessageAnalyzeTool.getXmlMessageFromRequest(request.getInputStream());
+
+---------------------------------------------------------------------------------------------------------------------
+2、Object parseReceiveMessage(String strXML)
+[方法说明]：
+		解析(接收到的消息)XML字符串，返回对应对象
+[方法参数]：
+		strXML --String*-- (从请求中获取到的消息)XML字符串
+[返回值]：
+		null 或 ReceiveTextMessage 或 ReceiveImageMessage 或 ReceiveVoiceMessage 或 ReceiveVideoMessage 或 ReceiveLocationMessage 或 ReceiveLinkMessage 或 ReceiveEventMessage		
+[使用例子]：
+Object object = MessageAnalyzeTool.parseReceiveMessage(strXML);
+if (object != null){
+	if (object instanceof ReceiveTextMessage){//文本消息
+		textMessage = (ReceiveTextMessage)object;
+	}else if (object instanceof ReceiveImageMessage){//图片消息
+		imageMessage = (ReceiveImageMessage)object;
+	}else if (object instanceof ReceiveVoiceMessage){//语音消息
+		voiceMessage = (ReceiveVoiceMessage)object;
+	}else if (object instanceof ReceiveVideoMessage){//视频消息
+		videoMessage = (ReceiveVideoMessage)object;
+	}else if (object instanceof ReceiveLocationMessage){//地理位置消息
+		locationMessage = (ReceiveLocationMessage)object;
+	}else if (object instanceof ReceiveLinkMessage){//链接消息
+		linkMessage = (ReceiveLinkMessage)object;
+	}else if (object instanceof ReceiveEventMessage){//事件消息
+		eventMessage = (ReceiveEventMessage)object;
+	}
+}
+
+
+=====================================================================================================================
+(三)、创建(被动)发送消息的工具类：com.zy.weixin.tool.MessageBuilderTool
+---------------------------------------------------------------------------------------------------------------------
+1、String getTextDiffPartXmlMsg(String content)
+[方法说明]：
+		创建【文本消息】的差异部分XML字符串
+[方法参数]：
+		content --String*-- 回复的消息内容
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getTextDiffPartXmlMsg(content);
+
+---------------------------------------------------------------------------------------------------------------------
+2、String getImageDiffPartXmlMsg(String mediaId)
+[方法说明]：
+		创建【图片消息】的差异部分XML字符串
+[方法参数]：
+		mediaId --String*-- 图片多媒体文件ID
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getImageDiffPartXmlMsg(mediaId);
+
+---------------------------------------------------------------------------------------------------------------------
+3、String getVoiceDiffPartXmlMsg(String mediaId)
+[方法说明]：
+		创建【语音消息】的差异部分XML字符串
+[方法参数]：
+		mediaId --String*-- 语音多媒体文件ID
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getVoiceDiffPartXmlMsg(mediaId);
+
+---------------------------------------------------------------------------------------------------------------------
+4、String getVideoDiffPartXmlMsg(String mediaId, String title, String escription)
+[方法说明]：
+		创建【视频消息】的差异部分XML字符串
+[方法参数]：
+		mediaId --String*-- 视频多媒体文件ID
+		title --String-- 视频消息标题
+		description --String-- 视频消息描述
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getVideoDiffPartXmlMsg(mediaId, title, description);
+
+---------------------------------------------------------------------------------------------------------------------
+5、String getMusicDiffPartXmlMsg(MusicMessageJson musicMessageJson)
+[方法说明]：
+		创建【音乐消息】的差异部分XML字符串
+[方法参数]：
+		MusicMessageJson --MusicMessageJson*-- 音乐消息JSON对象
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getMusicDiffPartXmlMsg(musicMessageJson);
+
+---------------------------------------------------------------------------------------------------------------------
+6、String getNewsDiffPartXmlMsg(List<ItemMessageJson> itemMessageList)
+[方法说明]：
+		创建【图文消息】的差异部分XML字符串
+[方法参数]：
+		itemMessageList --List<ItemMessageJson>*-- 图文消息里的条目信息JSON对象列表
+[返回值]：
+		null 或 XML格式字符串
+[使用例子]：
+String diffPartXmlMsg = MessageBuilderTool.getNewsDiffPartXmlMsg(itemMessageList);
+
+---------------------------------------------------------------------------------------------------------------------
+7、String getWholeXmlMessage(String openId, String developId, int type, String diffPartXmlMsg)
+[方法说明]：
+		获取整个消息XML字符串
+[方法参数]：
+		openId --String*-- 消息接收人(即关注人员)OpenID
+		developId --String*-- 开发者微信号
+		type --int*-- 消息类型(0-文本，1-图片，2-语音, 3-视频 , 4-音乐，5-图文)
+		diffPartXmlMsg --String*-- 消息差异部分XML字符串
+[返回值]：
+		null 或 完整消息的XML格式字符串
+[使用例子]：
+String strWholeXML = MessageBuilderTool.getWholeXmlMessage(openId, developId, type, diffPartXmlMsg);
+
+
+=====================================================================================================================
+(四)、(单公众帐号)公众帐号操作access token的帮助类：com.zy.weixin.common.AccessTokenHelper
+---------------------------------------------------------------------------------------------------------------------
+1、boolean getCredential(String appid, String appsecret)
+[方法说明]：
+		获取凭证操作，失败会重复请求获取
+[方法参数]：
+		appid --String*-- 第三方用户唯一凭证
+		appsecret --String*-- 第三方用户唯一凭证密钥
+[返回值]：
+		true表示成功获取凭证
+[使用例子]：
+String accessToken = null;
+AccessTokenHelper accessTokenHelper = AccessTokenHelper.getInstance();
+if (accessTokenHelper.getCredential(appid, appsecret))
+	accessToken = accessTokenHelper.getAccessToken();
+
+---------------------------------------------------------------------------------------------------------------------
+2、String getAccessToken()
+[方法说明]：
+		获取凭证
+[方法参数]：
+[返回值]：
+		null或凭证字符串
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+3、boolean refreshAccessToken()
+[方法说明]：
+		刷新凭证
+[方法参数]：
+[返回值]：
+		true表示刷新成功
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+4、void clearAccessToken()
+[方法说明]：
+		清空凭证
+[方法参数]：
+[返回值]：
+[使用例子]：
+		略
+
+
+=====================================================================================================================
+(五)、(多公众帐号)公众帐号操作access token的帮助类：com.zy.weixin.common.MultiAccessTokenHelper
+---------------------------------------------------------------------------------------------------------------------
+1、boolean getCredential(String accountid, String appid, String appsecret)
+[方法说明]：
+		获取凭证操作，失败会重复请求获取
+[方法参数]：
+		accountid --String*-- 公众帐号ID
+		appid --String*-- 第三方用户唯一凭证
+		appsecret --String*-- 第三方用户唯一凭证密钥
+[返回值]：
+		true表示成功获取凭证
+[使用例子]：
+String accessToken = null;
+MultiAccessTokenHelper accessTokenHelper = MultiAccessTokenHelper.getInstance();
+if (accessTokenHelper.getCredential(accountid, appid, appsecret))
+	accessToken = accessTokenHelper.getAccessToken();
+
+---------------------------------------------------------------------------------------------------------------------
+2、String getAccessToken(Integer accountid)
+[方法说明]：
+		获取凭证
+[方法参数]：
+		accountid --Integer*-- 公众帐号ID
+[返回值]：
+		null或凭证字符串
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+3、boolean refreshAccessToken(Integer accountid)
+[方法说明]：
+		刷新凭证
+[方法参数]：
+		accountid --Integer*-- 公众帐号ID
+[返回值]：
+		true表示刷新成功
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+4、void clearAccessToken(Integer accountid)
+[方法说明]：
+		清空凭证
+[方法参数]：
+[返回值]：
+[使用例子]：
+		略
+
+
+=====================================================================================================================
+(六)、(单)公众帐号操作jsapi_ticket（公众号用于调用微信JS-SDK接口的临时票据）的帮助类：com.zy.weixin.common.JSAPITicketHelper
+---------------------------------------------------------------------------------------------------------------------
+1、boolean getCredential(String access_token)
+[方法说明]：
+		获取jsapi_ticket操作，失败会重复请求获取
+[方法参数]：
+		access_token --String*-- 动态凭证
+[返回值]：
+		true表示成功获取jsapi_ticket
+[使用例子]：
+
+---------------------------------------------------------------------------------------------------------------------
+2、String getJSAPITicket()
+[方法说明]：
+		获取有效的jsapi_ticket
+[方法参数]：
+[返回值]：
+		null或jsapi_ticket
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+3、boolean refreshJSAPITicket()
+[方法说明]：
+		刷新jsapi_ticket
+[方法参数]：
+[返回值]：
+		true表示刷新成功
+[使用例子]：
+		略
+
+
+=====================================================================================================================
+(七)、(多公众帐号)公众帐号操作jsapi_ticket（公众号用于调用微信JS-SDK接口的临时票据）的帮助类：com.zy.weixin.common.MultiJSAPITicketHelper
+---------------------------------------------------------------------------------------------------------------------
+1、boolean getCredential(Integer accountid, String access_token)
+[方法说明]：
+		获取凭证操作，失败会重复请求获取
+[方法参数]：
+		accountid --String*-- 公众帐号ID
+		access_token --String*-- 动态凭证
+[返回值]：
+		true表示成功获取凭证
+[使用例子]：
+
+---------------------------------------------------------------------------------------------------------------------
+2、String getJSAPITicket(Integer accountid)
+[方法说明]：
+		获取凭证
+[方法参数]：
+		accountid --Integer*-- 公众帐号ID
+[返回值]：
+		null或jsapi_ticket
+[使用例子]：
+		略
+
+---------------------------------------------------------------------------------------------------------------------
+3、boolean refreshJSAPITicket(Integer accountid)
+[方法说明]：
+		刷新jsapi_ticket
+[方法参数]：
+		accountid --Integer*-- 公众帐号ID
+[返回值]：
+		true表示刷新成功
+[使用例子]：
+		略
+		
+
+=====================================================================================================================
+(八)、微信服务器的IP地址的获取工具类：com.zy.weixin.tool.ServerIPTool
+---------------------------------------------------------------------------------------------------------------------
+1、List<String> gainServerIpList(final String accessToken)
+[方法说明]：
+		获取微信服务器的IP地址列表
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+[返回值]：
+		null 或 以IP地址为元素的List集合
+[使用例子]：
+List<String> dataList = ServerIPTool.getInstance().gainServerIpList(accessToken);
+
+
+=====================================================================================================================
+(九)、微信多媒体文件上传与下载的工具类：com.zy.weixin.tool.MediaFileTool
+---------------------------------------------------------------------------------------------------------------------
+1、Object uploadFile(final String accessToken, int type, String filePath)
+[方法说明]：
+		上传多媒体文件
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		type --int*-- 多媒体文件类型：1-图片(image)、2-语音(voice)、3-视频(video)、4-缩略图(thumb)
+		filePath --String*-- 源文件的绝对路径(绝对目录+文件名+.+后缀名)
+[返回值]：
+		null 或 UploadFileJson对象 或 CommonReturnMsgJson对象
+[使用例子]：
+Object object = MediaFileTool.getInstance().uploadFile(accessToken, type, filePath);
+if (object != null){
+	if (object instanceof CommonReturnMsgJson){//上传失败
+		errorMsgJson = (CommonReturnMsgJson)object;
+	}else if (object instanceof UploadFileJson){//上传成功
+		uploadFileJson = (UploadFileJson)object;
+	}
+}
+
+---------------------------------------------------------------------------------------------------------------------
+2、boolean downloadFile(final String accessToken, String mediaId, String filePath)
+[方法说明]：
+		下载多媒体文件
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		mediaId --String*-- 多媒体文件ID
+		filePath --String*-- 存放目标文件的绝对路径(绝对目录+文件名+.+后缀名)
+[返回值]：
+		true表示下载成功
+[使用例子]：
+boolean isOK = MediaFileTool.getInstance().downloadFile(accessToken, mediaId, filePath);
+
+
+=====================================================================================================================
+(十)、微信用户分组的工具类：com.zy.weixin.tool.GroupTool
+---------------------------------------------------------------------------------------------------------------------
+1、CreateGroupJson createGroup(final String accessToken, String groupName)
+[方法说明]：
+		创建分组
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		groupName --String*-- 分组名字(30个字符以内)
+[返回值]：
+		null 或 CreateGroupJson对象
+[使用例子]：
+CreateGroupJson createGroupJson = GroupTool.getInstance().createGroup(accessToken, groupName);
+if (createGroupJson != null){
+	GroupInfoJson group = createGroupJson.getGroup();
+}
+
+---------------------------------------------------------------------------------------------------------------------
+2、GroupListJson getGroupList(final String accessToken)
+[方法说明]：
+		获取分组列表
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+[返回值]：
+		null 或 GroupListJson对象
+[使用例子]：
+GroupListJson groupListJson = GroupTool.getInstance().getGroupList(accessToken);
+if (groupListJson != null){
+	List<GroupInfoJson> groups = groupListJson.getGroups();
+	for (GroupInfoJson groupInfoJson : groups){
+	
+	}
+}
+
+---------------------------------------------------------------------------------------------------------------------
+3、String getGroupId(final String accessToken, String openId)
+[方法说明]：
+		查询用户所在分组
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		openId --String*-- 用户的OpenID
+[返回值]：
+		null 或 用户所属的groupid
+[使用例子]：
+String groupId = GroupTool.getInstance().getGroupId(accessToken, openId);
+
+---------------------------------------------------------------------------------------------------------------------
+4、boolean updateGroupName(final String accessToken, String groupId, String groupName)
+[方法说明]：
+		修改分组名称
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		groupId --String*-- 分组ID
+		groupName --String*-- 分组名字(30个字符以内)
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = GroupTool.getInstance().updateGroupName(accessToken, groupId, groupName);
+
+---------------------------------------------------------------------------------------------------------------------
+5、boolean moveUserToGroup(final String accessToken, String openId, String toGroupId)
+[方法说明]：
+		移动用户到新的分组
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		openId --String*-- 用户的OpenID
+		toGroupId --String*-- 新的分组ID
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = GroupTool.getInstance().moveUserToGroup(accessToken, openId, toGroupId);
+
+---------------------------------------------------------------------------------------------------------------------
+6、boolean batchMoveUserToGroup(final String accessToken, List<String> openIdList, String toGroupId)
+[方法说明]：
+		批量移动用户到新的分组
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		@param openIdList --List*-- 用户的OpenID的List集合（size不能超过50）
+		toGroupId --String*-- 新的分组ID
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = GroupTool.getInstance().batchMoveUserToGroup(accessToken, openIdList, toGroupId);
+
+
+=====================================================================================================================
+(十一)、微信用户操作的工具类：com.zy.weixin.tool.UserTool
+---------------------------------------------------------------------------------------------------------------------
+1、UserListJson getUserList(final String accessToken, String next_openid)
+[方法说明]：
+		获取关注人员列表
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		next_openid --String-- 下一个OpenID(用于分批获取)
+[返回值]：
+		null 或 UserListJson对象
+[使用例子]：
+UserListJson userListJson = UserTool.getInstance().getUserList(accessToken, next_openid);
+if (userListJson != null){
+	List<String> openidList = userListJson.getData().getOpenid();
+	for (String openid : openidList){
+	
+	}
+}
+
+---------------------------------------------------------------------------------------------------------------------
+2、UserInfoJson gainUserInfo(final String accessToken, String openId, String language)
+[方法说明]：
+		获取用户基本信息（包括UnionID机制）
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		openId --String*-- 用户的OpenID
+		language --String-- 国家地区语言版本（zh_CN简体，zh_TW繁体，en英语）（默认zh_CN简体）
+[返回值]：
+		null 或 UserInfoJson对象
+[使用例子]：
+UserInfoJson userInfoJson = UserTool.getInstance().gainUserInfo(accessToken, openId, language);
+
+---------------------------------------------------------------------------------------------------------------------
+3、boolean updateUserRemark(final String accessToken, String openId, String remark)
+[方法说明]：
+		设置用户备注
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		openId --String*-- 用户的OpenID
+		remark --String*-- 新的备注名（长度必须小于15个汉字）
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = UserTool.getInstance().updateUserRemark(accessToken, openId, remark);
+
+
+=====================================================================================================================
+(十二)、微信OAuth2.0网页授权的工具类：com.zy.weixin.tool.OAuth2AuthorizeTool
+---------------------------------------------------------------------------------------------------------------------
+1、String getAuthorizeUrl(String appId, String redirectUrl, String scope, String state)
+[方法说明]：
+		创建授权网页URL
+[方法参数]：
+		appId --String*-- 第三方用户唯一凭证
+		redirectUrl --String*-- 授权后重定向的回调链接地址(以http://开头)
+		scope --String*-- 应用授权作用域，值为OAuth2AuthorizeTool.SCOPE_SNSAPI_BASE或OAuth2AuthorizeTool.SCOPE_SNSAPI_USERINFO
+		state --String-- 重定向后会带上state参数 (值为a-zA-Z0-9格式)
+[返回值]：
+		null 或 URL字符串
+[使用例子]：
+String strURL = OAuth2AuthorizeTool.getInstance().getAuthorizeUrl(appId, redirectUrl, scope, state);
+
+---------------------------------------------------------------------------------------------------------------------
+2、OAuth2AuthorizeJson getAccessTokenByCode(String appid, String appsecret, String code)
+[方法说明]：
+		通过code获取网页授权access_token
+[方法参数]：
+		appid --String*-- 第三方用户唯一凭证
+		appsecret --String*-- 第三方用户唯一凭证密钥
+		code --String*-- 换取access_token的临时票据
+[返回值]：
+		null 或 OAuth2AuthorizeJson对象
+[使用例子]：
+OAuth2AuthorizeJson oauth2AuthorizeJson = OAuth2AuthorizeTool.getInstance().getAccessTokenByCode(appid, appsecret, code);
+
+---------------------------------------------------------------------------------------------------------------------
+3、OAuth2AuthorizeJson getNewAccessTokenByRefresh(String appid, String refreshToken)
+[方法说明]：
+		根据refresh_token，刷新网页授权access_token
+[方法参数]：
+		appid --String*-- 第三方用户唯一凭证
+		refreshToken --String*-- 换取access_token的票据code
+[返回值]：
+		null 或 OAuth2AuthorizeJson对象
+[使用例子]：
+OAuth2AuthorizeJson oauth2AuthorizeJson = OAuth2AuthorizeTool.getInstance().getNewAccessTokenByRefresh(appId, refreshToken);
+
+---------------------------------------------------------------------------------------------------------------------
+4、OAuth2AuthorizeUserInfoJson getUserInfoByAccessToken(String accessToken, String openId, String language)
+[方法说明]：
+		根据网页授权access_token，获取微信用户信息
+[方法参数]：
+		accessToken --String*-- 网页授权access_token
+		openId --String*-- 微信用户的唯一标识
+		language --String-- 国家地区语言版本（zh_CN简体，zh_TW繁体，en英语）（默认zh_CN简体）
+[返回值]：
+		null 或 OAuth2AuthorizeUserInfoJson对象
+[使用例子]：
+OAuth2AuthorizeUserInfoJson userInfoJson = OAuth2AuthorizeTool.getInstance().getUserInfoByAccessToken(accessToken, openId, null);
+
+---------------------------------------------------------------------------------------------------------------------
+5、boolean checkAccessToken(String accessToken, String openId)
+[方法说明]：
+		检验授权凭证（网页授权access_token）是否有效
+[方法参数]：
+		accessToken --String*-- 网页授权access_token
+		openId --String*-- 微信用户的唯一标识
+[返回值]：
+		true表示有效，false表示无效
+[使用例子]：
+boolean isOK = OAuth2AuthorizeTool.getInstance().checkAccessToken(accessToken, openId);
+
+
+=====================================================================================================================
+(十三)、微信菜单操作的工具类：com.zy.weixin.tool.MenuTool
+---------------------------------------------------------------------------------------------------------------------
+1、boolean createMenu(final String accessToken, MenuListJson createMenuJson)
+[方法说明]：
+		创建菜单
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+		createMenuJson --CreateMenuJson*-- 创建自定义菜单JSON对象
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = MenuTool.getInstance().createMenu(accessToken, createMenu());
+
+---------------------------------------------------------------------------------------------------------------------
+2、boolean deleteMenu(final String accessToken)
+[方法说明]：
+		删除菜单
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+[返回值]：
+		true表示操作成功
+[使用例子]：
+boolean isOK = MenuTool.getInstance().deleteMenu(accessToken);
+
+---------------------------------------------------------------------------------------------------------------------
+3、QueryMenuJson getMenuList(final String accessToken)
+[方法说明]：
+		查询菜单
+[方法参数]：
+		accessToken --String*-- 公众号的全局唯一票据(access_token)
+[返回值]：
+		null 或 创建自定义菜单JSON对象
+[使用例子]：
+QueryMenuJson queryMenuJson = MenuTool.getInstance().getMenuList(accessToken);
+
+
+=====================================================================================================================
